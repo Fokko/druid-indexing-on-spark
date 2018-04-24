@@ -26,18 +26,20 @@ drwxr-xr-x  3 root root 4.0K Jan 22 10:58 20171211T000000.000Z_20171212T000000.0
 -rw-r--r--  1 root root 2.3K Jan 22 12:17 meta.smoosh
 -rw-r--r--  1 root root    4 Jan 22 12:17 version.bin
 ```
-An overview of the files:
+An [overview of the files](https://github.com/druid-io/druid/blob/master/docs/content/design/segments.md):
 - `0000.smoosh` The actual data including the bitmap indices
 - `0_index.zip` The zipped segments stored on the deep-store, pulled by the historical node and unzipped locally
 - `20171211T000000.000Z_20171212T000000.000Z` no idea
 - `factory.json` no idea
-- `meta.smoosh` no idea
-- `version.bin` no idea
+- `meta.smoosh` A file with metadata (filenames and offsets) about the contents of the other `smoosh` files
+- `version.bin` 4 bytes representing the current segment version as an integer. E.g., for v9 segments, the version is 0x0, 0x0, 0x0, 0x9
+
+
 
 ## Plan of attack
 
 - Use Apache Spark dataframes to get the relevant dimensions and metrics
-- Build the [roaring bitmaps](https://roaringbitmap.org/) on the dimension fields, by looking into the existing MapReduce code, and possibly reuse some of the code
+- Build the [roaring bitmaps](https://roaringbitmap.org/) on the dimension fields, by looking into the [existing MapReduce code](https://github.com/druid-io/druid/tree/master/indexing-hadoop/src/main/java/io/druid/indexer), and possibly reuse some of the code
 - Generate the metadata files
 - Zip everything together into one zip that represents one segment
 - Update the Druid metastore to let Druid know there is a new segment
@@ -45,5 +47,14 @@ An overview of the files:
 ### Optional vanity
 
 - Configure roll-ups, use Spark to group by on the dimension fields, and round the time-dimension to 1, 5, 60, etc minutes
-- Make the segment size configurable. Using the MapReduce jobs you can tune the segment size to get optimal performance, using Spark we can do something similar: https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/util/SizeEstimator.scala
+- Make the segment size configurable. Using the MapReduce jobs you can tune the segment size to get optimal performance, using Spark we can do something similar: https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/util/SizeEstimator.scala or count to get [partitions from ~5m rows](https://github.com/druid-io/druid/blob/master/docs/content/design/segments.md#segments)
 - Load the segment configuration from the Druid indexing format (using Jackson to parse the stuff, these classes can be reused from Druid)
+- Look into storing the segments on the deepstore using gzip instead of zip
+
+## TODO
+
+- Generate a segment using MapReduce of the Wikiticker data (so we can compare it with the Spark output)
+- Make local instance of Druid to test the segments
+- Build some queries to compare the end results
+
+
