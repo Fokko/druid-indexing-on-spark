@@ -57,4 +57,60 @@ An [overview of the files](https://github.com/druid-io/druid/blob/master/docs/co
 - Make local instance of Druid to test the segments
 - Build some queries to compare the end results
 
+## Local Druid instance
 
+Using Docker it is easy to spin up a local Druid instance:
+```sh
+git clone https://github.com/Fokko/docker-druid
+cd docker-druid
+docker build -t druid .
+echo "Grab some coffee, this will take a while..."
+docker run --rm -i -p 8082:8082 -p 8081:8081 -p 5432:5432 druid
+```
+The Druid console should come up:
+Druid Console: http://localhost:8081/
+Druid Indexing: http://localhost:8081/console.html
+
+You can connect to the Druid `psql`:
+```
+Fokkos-MacBook-Pro:druid-indexing-on-spark fokkodriesprong$ psql -h 127.0.0.1 -p 5432 -U druid
+Password for user druid: diurd
+psql (10.3, server 9.5.12)
+SSL connection (protocol: TLSv1.2, cipher: ECDHE-RSA-AES256-GCM-SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+druid=# \dt
+               List of relations
+ Schema |         Name          | Type  | Owner
+--------+-----------------------+-------+-------
+ public | druid_audit           | table | druid
+ public | druid_config          | table | druid
+ public | druid_datasource      | table | druid
+ public | druid_pendingsegments | table | druid
+ public | druid_rules           | table | druid
+ public | druid_segments        | table | druid
+ public | druid_supervisors     | table | druid
+ public | druid_tasklocks       | table | druid
+ public | druid_tasklogs        | table | druid
+ public | druid_tasks           | table | druid
+(10 rows)
+```
+
+Inside of the container, the data is stored under `/tmp/druid/`:
+```
+root@6ad4fee19af0:/var/lib/druid# find /tmp/druid
+/tmp/druid
+/tmp/druid/localStorage
+/tmp/druid/localStorage/wikiticker
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z/0
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z/0/index.zip
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z/0/descriptor.json
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z/0/.index.zip.crc
+/tmp/druid/localStorage/wikiticker/2015-09-12T00:00:00.000Z_2015-09-13T00:00:00.000Z/2018-05-06T21:06:57.094Z/0/.descriptor.json.crc
+```
+
+## Futher reference
+
+Real time analytics: Divolte + Kafka + Druid + Superset: https://blog.godatadriven.com/divolte-kafka-druid-superset
