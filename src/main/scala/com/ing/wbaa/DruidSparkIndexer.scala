@@ -34,18 +34,27 @@ object DruidSparkIndexer extends App {
   val millisPerHour = 60 * 60 * 1000
   val millisPerDay = 24 * millisPerHour
 
-  val bucket = udf((time: String) => (new DateTime(time).getMillis / millisPerHour).floor)
+  val bucketBy = millisPerHour
+
+  val partitionStart = udf((time: String) => (new DateTime(time).getMillis / bucketBy).floor)
   val estimateSize = udf((row: Row) => SizeEstimator.estimate(row))
   val numSegments = udf((sizeInBytes: Long) => (sizeInBytes / targetSizeInBytes).ceil)
+  val assignBucket = udf((numSegments: Long) => (numSegments * Math.random()).ceil)
 
-  val rolledUpDf = inputDf.withColumn("__time", bucket('time))
+  val rolledUpDf = inputDf.withColumn("__time", partitionStart('time))
     .withColumn("__size", estimateSize(struct(inputDf.columns.map(col): _*)))
     .cache()
 
   val partitionsDf = rolledUpDf.groupBy("__time")
     .sum("__size")
     .withColumn("num_segments", numSegments(col("sum(__size)")))
+
+  partitionsDf.join(rolledUpDf, "__time")
+    .withColumn("bucket", assignBucket('num_segments))
+    .groupBy("__time", "bucket")
+    .sum("__size")
     .show
+
 
 //  val window = Window
 //    .partitionBy("shardNum", "dateTime", "partitionNum")
