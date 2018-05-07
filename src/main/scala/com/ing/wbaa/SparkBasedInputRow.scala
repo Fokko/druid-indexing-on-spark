@@ -37,3 +37,7 @@ class SparkBasedInputRow(row: SparkRow) extends InputRow {
     getTimestamp.toString()
   }
 }
+
+object SparkBasedInputRow {
+  def apply(row: SparkRow): SparkBasedInputRow = new SparkBasedInputRow(row)
+}

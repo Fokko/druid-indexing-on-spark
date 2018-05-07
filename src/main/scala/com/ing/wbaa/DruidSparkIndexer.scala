@@ -6,6 +6,10 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.joda.time.DateTime
+import org.apache.spark.sql.functions._
+import org.joda.time.DateTime
+import org.apache.spark.util.SizeEstimator
+import org.apache.spark.sql.Row
 
 object DruidSparkIndexer extends App {
 
@@ -19,22 +23,26 @@ object DruidSparkIndexer extends App {
     .master("local[*]")
     .getOrCreate()
 
-  val df = spark
+  import spark.implicits._
+
+  val inputDf = spark
     .read
     .json("/Users/fokkodriesprong/Desktop/docker-druid/ingestion/wikiticker-2015-09-12-sampled.json")
 
-  import spark.implicits._
+  val rolledUpDf = inputDf.withColumn("__time", bucket('time))
+    .withColumn("__size", estimateSize(struct(inputDf.columns.map(col): _*)))
+    .cache()
+
+  rolledUpDf.groupBy("__time")
+    .sum("__size")
+    .withColumn("num_segments", numSegments(col("sum(__size)")))
+    .show
 
   val window = Window
     .partitionBy("shardNum", "dateTime", "partitionNum")
     .orderBy(WikitickerConfig.dimension.map(d => col(d)):_*)
-//
-//  df.withColumn("shardNum", lit(0))
-//    .withColumn("dateTime", lit(new DateTime("2015-09-12T00:47:08Z").getMillis))
-//    .withColumn("partitionNum", lit(0))
-//    .with
 
-  val out = df.map(row => {
+  val out = rolledUpDf.map(row => {
     val sparkRow = new SparkBasedInputRow(row)
 
     val serializedInputRow = InputRowSerde

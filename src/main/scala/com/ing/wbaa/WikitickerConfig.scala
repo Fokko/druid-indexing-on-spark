@@ -27,5 +27,6 @@ object WikitickerConfig {
   )
 
   val dimensionSchema = DimensionsSpec.getDefaultSchemas(dimension)
-    val dimensionSpec = new DimensionsSpec(dimensionSchema, List(), null)
+  val dimensionSpec   = new DimensionsSpec(dimensionSchema, List(), null)
+
 }
