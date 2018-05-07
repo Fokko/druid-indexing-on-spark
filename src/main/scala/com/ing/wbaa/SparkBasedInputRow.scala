@@ -9,7 +9,9 @@ import scala.collection.JavaConversions._
 
 
 class SparkBasedInputRow(row: SparkRow) extends InputRow {
-  override def getDimensions: util.List[String] = WikitickerConfig.dimension.toList
+  override def getDimensions: util.List[String] = {
+    WikitickerConfig.dimension.filter(e => row.getAs[Object](e) != null)
+  }
 
   override def getTimestampFromEpoch: Long = getTimestamp.getMillis
 
@@ -18,7 +20,7 @@ class SparkBasedInputRow(row: SparkRow) extends InputRow {
   }
 
   override def getDimension(dimension: String): util.List[String] = {
-    List(row.getAs[String](dimension))
+    List(row.getAs[Object](dimension).toString)
   }
 
   override def getRaw(dimension: String): AnyRef = {
