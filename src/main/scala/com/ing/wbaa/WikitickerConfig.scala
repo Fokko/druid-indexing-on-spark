@@ -1,12 +1,13 @@
 package com.ing.wbaa
 
-import io.druid.data.input.impl.DimensionSchema
+import io.druid.data.input.impl.DimensionsSpec
+import scala.collection.JavaConversions._
 
 // This should be read from a nice config file
 object WikitickerConfig {
   val timeDimension = "time"
 
-  val dimension = Array(
+  val dimension = List(
     "channel",
     "cityName",
     "comment",
@@ -25,5 +26,6 @@ object WikitickerConfig {
     "user"
   )
 
-  dimension.map(dim => new DimensionSchema(dim, null, true))
+  val dimensionSchema = DimensionsSpec.getDefaultSchemas(dimension)
+    val dimensionSpec = new DimensionsSpec(dimensionSchema, List(), null)
 }
