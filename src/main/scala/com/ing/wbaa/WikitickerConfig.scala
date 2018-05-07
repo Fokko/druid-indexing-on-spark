@@ -25,5 +25,5 @@ object WikitickerConfig {
     "user"
   )
 
-  dimension.map(dim => new DimensionSchema(dim, null, true))
+//  dimension.map(dim => new DimensionSchema(dim, null, true))
 }
